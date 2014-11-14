@@ -21,6 +21,7 @@ import com.marklogic.xcc.exceptions.RequestException;
  * @author <a href="mailto:mark.helmstetter@marklogic.com">Mark Helmstetter</a>
  * @author <a href="mailto:bob.browning@pressassociation.com">Bob Browning</a>
  */
+ // 14-11-2014 Chris Hudson-Silver - Updated to work with MarkLogic 7 
 @MojoGoal("bootstrap")
 public class BootstrapMojo extends AbstractBootstrapMojo {
 
@@ -104,6 +105,8 @@ public class BootstrapMojo extends AbstractBootstrapMojo {
 			session.submitRequest(q);
 			success = true;
 		} catch (RequestException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		} finally {
 			session.close();
 		}
@@ -117,7 +120,8 @@ public class BootstrapMojo extends AbstractBootstrapMojo {
 
         if (!"file-system".equalsIgnoreCase(xdbcModulesDatabase)) {
             this.database = xdbcModulesDatabase;
-            session = getXccSession();        
+            session = getXccSession();  
+			session.setTransactionMode(Session.TransactionMode.UPDATE);
 
             try {
                 String[] paths = {"/install.xqy"
@@ -142,7 +146,12 @@ public class BootstrapMojo extends AbstractBootstrapMojo {
                     } catch (Exception e) {
                         getLog().error("Failed to insert required library.");
                     }
-                    session.commit();
+                    try {
+						session.commit();
+					} catch (RequestException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
                 }
             } finally {
                 session.close();

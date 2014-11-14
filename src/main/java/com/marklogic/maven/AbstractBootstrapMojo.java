@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.io.UnsupportedEncodingException;
 
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -13,9 +14,11 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.utils.URIUtils;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.entity.StringEntity;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.codehaus.plexus.util.IOUtil;
@@ -24,7 +27,7 @@ import org.json.JSONException;
 import org.json.JSONML;
 import org.json.JSONObject;
 import org.json.XML;
-
+// 14-11-2014 Chris Hudson-Silver - Updated to work with MarkLogic 7 
 public abstract class AbstractBootstrapMojo extends AbstractMarkLogicMojo {
 
     protected static final String XQUERY_PROLOG = "xquery version '1.0-ml';\n";
@@ -86,8 +89,10 @@ public abstract class AbstractBootstrapMojo extends AbstractMarkLogicMojo {
 	protected HttpResponse executeBootstrapQuery(String query)
 			throws MojoExecutionException {
 		HttpResponse response;
-		
-		if (isMarkLogic5()) {
+		if (marklogicVersion==7){
+			response = executeML7BootstrapQuery(query);
+		}
+		else if (isMarkLogic5()) {
 			getLog().info("Bootstrapping MarkLogic 5");
 			response = executeML5BootstrapQuery(query);
 		} else {
@@ -195,6 +200,119 @@ public abstract class AbstractBootstrapMojo extends AbstractMarkLogicMojo {
         HttpPost httpPost = new HttpPost(uri);
 
         try {
+            response = httpClient.execute(httpPost);
+        } catch (Exception e) {
+            throw new MojoExecutionException("Error executing POST to create bootstrap server", e);
+        }
+        if (response.getStatusLine().getStatusCode() != 200) {
+            throw new MojoExecutionException("POST response failed: " + response.getStatusLine());
+        }
+
+		Header[] headers = response.getHeaders("qconsole");
+		if (headers != null && headers.length > 0) {
+			try {
+				JSONObject json = new JSONObject(headers[0].getValue());
+				if (json.getString("type").equals("error")) {
+					StringBuilder b = new StringBuilder(
+							"Failed to execute query ...\n");
+					if (response.getEntity() != null) {
+						InputStream is = response.getEntity().getContent();
+						JSONObject jsonError = new JSONObject(
+								IOUtil.toString(is));
+						b.append(XML.toString(jsonError));
+					}
+					throw new MojoExecutionException(b.toString());
+				}
+			} catch (JSONException e) {
+				throw new MojoExecutionException(
+						"Unable to parse json error header", e);
+			} catch (IOException ioe) {
+				throw new MojoExecutionException(
+						"IOException parsing json error", ioe);
+			}
+		}
+
+        return response;
+    }
+	
+	protected HttpResponse executeML7BootstrapQuery(String query) throws MojoExecutionException {
+        HttpClient httpClient = this.getHttpClient();
+        List<NameValuePair> qparams = new ArrayList<NameValuePair>();
+        qparams.add(new BasicNameValuePair("group-id", group));
+        qparams.add(new BasicNameValuePair("format", "json"));
+
+        URI uri;
+        try {
+            uri = URIUtils.createURI("http", this.host, configPort, "/manage/v2/servers/" + configServer,
+                    URLEncodedUtils.format(qparams, "UTF-8"), null);
+        } catch (URISyntaxException e1) {
+            throw new MojoExecutionException("Invalid uri for querying " + configServer + " for it's id", e1);
+        }
+
+        HttpGet httpGet = new HttpGet(uri);
+
+        HttpResponse response;
+        String sid = null;
+       
+
+        try {
+            response = httpClient.execute(httpGet);
+        } catch (Exception e) {
+            throw new MojoExecutionException("Error executing GET " + uri, e);
+        }
+        if (response.getStatusLine().getStatusCode() != 200) {
+            throw new MojoExecutionException("GET response failed: " + response.getStatusLine());
+        }
+        
+		try {
+			if (response.getEntity() != null) {
+				InputStream is = response.getEntity().getContent();
+				JSONObject json = new JSONObject(IOUtil.toString(is));
+				sid = json.getJSONObject("server-default").getString("id");
+			}
+		} catch (Exception e) {
+			throw new MojoExecutionException("Error parsing json response to get " + configServer + " server id", e);
+		}
+        
+        
+        if (sid == null) {
+			throw new MojoExecutionException("Server id for " + configServer + " is null, aborting");
+        }
+		
+		
+        try {
+            uri = URIUtils.createURI("http", this.host, configPort, "/manage/v2/databases/Modules",
+                    URLEncodedUtils.format(qparams, "UTF-8"), null);
+        } catch (URISyntaxException e1) {
+            throw new MojoExecutionException("Invalid uri for querying " + configServer + " for it's id", e1);
+        }
+
+        httpGet = new HttpGet(uri);
+
+        
+        
+        qparams.clear();
+        qparams.add(new BasicNameValuePair("sid", sid));
+		qparams.add(new BasicNameValuePair("action", "eval"));
+		qparams.add(new BasicNameValuePair("querytype", "xquery"));
+		
+		
+		
+        try {
+            uri = URIUtils.createURI("http", this.host, bootstrapPort, "/qconsole/endpoints/evaler.xqy",
+                    URLEncodedUtils.format(qparams, "UTF-8"), null);
+        } catch (URISyntaxException e1) {
+            throw new MojoExecutionException("Invalid uri for bootstrap query", e1);
+        }
+
+        HttpPost httpPost = new HttpPost(uri);
+		try{
+			HttpEntity entity = new StringEntity(query);
+			httpPost.setEntity(entity);
+        } catch ( UnsupportedEncodingException uee){
+			throw new MojoExecutionException("unable to set query"+ uee);
+		}
+		try {
             response = httpClient.execute(httpPost);
         } catch (Exception e) {
             throw new MojoExecutionException("Error executing POST to create bootstrap server", e);

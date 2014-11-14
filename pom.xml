@@ -3,7 +3,7 @@
 
     <groupId>com.marklogic.maven</groupId>
     <artifactId>marklogic-maven-plugin</artifactId>
-    <version>1.0.12-SNAPSHOT</version>
+    <version>1.0.13-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>MarkLogic Maven Plugin</name>
@@ -58,20 +58,17 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git@github.com:PressAssociation/maven-marklogic-plugin.git</connection>
-        <developerConnection>scm:git:git@github.com:PressAssociation/maven-marklogic-plugin.git</developerConnection>
-        <url>http://github.com/PressAssociation/maven-marklogic-plugin/</url>
+        <connection>git@github.com:chudson-ixxus/maven-marklogic-plugin.git</connection>
+        <developerConnection>git@github.com:chudson-ixxus/maven-marklogic-plugin.git</developerConnection>
+        <url>https://github.com/chudson-ixxus/maven-marklogic-plugin</url>
     </scm>
 
     <distributionManagement>
-        <repository>
-            <id>pressassociation.releases</id>
-            <url>http://nexus.howden.press.net/nexus/content/repositories/releases</url>
-        </repository>
-        <snapshotRepository>
-            <id>pressassociation.snapshots</id>
-            <url>http://nexus.howden.press.net/nexus/content/repositories/snapshots</url>
-        </snapshotRepository>
+         <snapshotRepository>
+         	<id>snapshots</id>
+            <url>https://inexus.ixxus.co.uk/nexus/content/repositories/snapshots</url>
+         </snapshotRepository>  
+        
     </distributionManagement>
 
     <prerequisites>
@@ -128,10 +125,11 @@
             <artifactId>httpclient</artifactId>
             <version>4.1.2</version>
         </dependency>
+		<!-- 14-11-2014 Chris Hudson-Silver updated to work with MarkLogic 7 -->
         <dependency>
             <groupId>com.marklogic</groupId>
             <artifactId>marklogic-xcc</artifactId>
-            <version>4.1.4</version>
+            <version>7.0.4</version>
         </dependency>
         <dependency>
             <groupId>com.marklogic.ps</groupId>
@@ -172,7 +170,7 @@
         <dependency>
         	<groupId>com.marklogic</groupId>
         	<artifactId>marklogic-install-server</artifactId>
-        	<version>1.0.7</version>
+        	<version>1.0.8</version>
         </dependency>
     </dependencies>
 
