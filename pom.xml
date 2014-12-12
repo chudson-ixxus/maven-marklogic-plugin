@@ -3,7 +3,7 @@
 
     <groupId>com.ixxus.marklogic</groupId>
     <artifactId>marklogic-maven-plugin</artifactId>
-    <version>1.0.19</version>
+    <version>1.0.20-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>MarkLogic Maven Plugin</name>
@@ -61,7 +61,7 @@
         <connection>scm:git:git@github.com:chudson-ixxus/maven-marklogic-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:chudson-ixxus/maven-marklogic-plugin.git</developerConnection>
         <url>https://github.com/chudson-ixxus/maven-marklogic-plugin</url>
-      <tag>marklogic-maven-plugin-1.0.19</tag>
+      <tag>HEAD</tag>
   </scm>
 
     <distributionManagement>
