@@ -3,7 +3,7 @@
 
     <groupId>com.ixxus.marklogic</groupId>
     <artifactId>marklogic-maven-plugin</artifactId>
-    <version>1.0.17-SNAPSHOT</version>
+    <version>1.0.18-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>MarkLogic Maven Plugin</name>
@@ -69,7 +69,10 @@
          	<id>snapshots</id>
             <url>https://inexus.ixxus.co.uk/nexus/content/repositories/snapshots</url>
          </snapshotRepository>  
-        
+        <repository>
+            <id>thirdparty</id>
+            <url>https://inexus.ixxus.co.uk/nexus/content/repositories/thirdparty</url>
+        </repository>
     </distributionManagement>
 
     <prerequisites>
